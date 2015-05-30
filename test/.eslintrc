@@ -1,0 +1,8 @@
+globals:
+  describe: false
+  it: false
+  before: false
+  beforeEach: false
+  after: false
+  window: true
+  document: true

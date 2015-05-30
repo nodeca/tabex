@@ -1,0 +1,24 @@
+{
+  "name": "tabex",
+  "main": "dist/tabex.js",
+  "homepage": "https://github.com/nodeca/tabex",
+  "description": "Crosstab message bus for browsers.",
+  "keywords": [
+    "tab",
+    "cross",
+    "crosstab",
+    "inter",
+    "intercom",
+    "broadcast"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "lib",
+    "node_modules",
+    "test",
+    "Makefile",
+    "index*"
+  ]
+}
