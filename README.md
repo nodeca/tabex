@@ -86,7 +86,7 @@ Options:
   isolated `tabex` instances in parallel.
 
 
-#### client.on(channel, handler)`
+#### client.on(channel, handler)
 
 Subscribe to channel. Chainable.
 
@@ -94,7 +94,7 @@ Subscribe to channel. Chainable.
 - __handler__ (Function) - `function (data, channel) { ... }`.
 
 
-#### client.off(channel [, handler])`
+#### client.off(channel [, handler])
 
 Unsubscribe handler from channel. Chainable. If handler not specified -
 unsubscribe all handlers from given channel.
@@ -263,7 +263,7 @@ flive.on('!sys.master', function (data) {
 // If list of active channels changed - subscribe to new channels and
 // remove outdated ones.
 //
-flive.on('!sys.channels.refresh', function (channels) {
+flive.on('!sys.channels.refresh', function (data) {
 
   if (!fayeClient) {
     return;
@@ -272,7 +272,7 @@ flive.on('!sys.channels.refresh', function (channels) {
   // Unsubscribe removed channels
   //
   Object.keys(trackedChannels).forEach(function (channel) {
-    if (channels.indexOf(channel) === -1) {
+    if (data.channels.indexOf(channel) === -1) {
       trackedChannels[channel].cancel();
       delete trackedChannels[channel];
     }
@@ -280,10 +280,10 @@ flive.on('!sys.channels.refresh', function (channels) {
 
   // Subscribe to new channels
   //
-  channels.forEach(function (channel) {
+  data.channels.forEach(function (channel) {
     if (!trackedChannels.hasOwnProperty(channel)) {
       trackedChannels[channel] = fayeClient.subscribe(channel, function (message) {
-        live.emit(channel, message.data);
+        flive.emit(channel, message.data);
       });
     }
   });
@@ -309,7 +309,7 @@ flive.filterIn(function (channel, message, callback) {
   if (channel.indexOf('/remote!!') === 0) {
     // Make sure current tab is master
     if (fayeClient) {
-      fayeClient.publish(channel, data);
+      fayeClient.publish(channel, message.data);
     }
 
     return;
