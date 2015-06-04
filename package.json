@@ -17,8 +17,6 @@
   "scripts": {
     "test": "make test"
   },
-  "dependencies": {
-  },
   "devDependencies": {
     "es5-shim": "^4.1.4",
     "browserify": "^10.2.1",

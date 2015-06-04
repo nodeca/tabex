@@ -5,13 +5,13 @@ tabex
 [![NPM version](https://img.shields.io/npm/v/tabex.svg?style=flat)](https://www.npmjs.org/package/tabex)
 
 > Cross-tab message bus for browsers.
-
-Awesome things to do with this library:
-
-- Send messages (including cross-domain) between browser tabs and windows.
-- Share single websocket connection when multiple tabs open (save server
-  resources).
-- Shared locks (run live sound notification only in single tab on server event).
+>
+> Awesome things to do with this library:
+>
+> - Send messages (including cross-domain) between browser tabs and windows.
+> - Share single websocket connection when multiple tabs open (save server
+>   resources).
+> - Shared locks (run live sound notification only in single tab on server event).
 
 __Supported browser:__
 
@@ -175,7 +175,7 @@ __Warning! Never set `*` to allowed origins value.__ That's not secure.
 ### System events
 
 Channels `!sys.*` are reserved for internal needs and extensions. Also `tabex`
-already has built-in events, emitted on state change.
+already has built-in events, emitted on some state changes:
 
 - __!sys.master__ - emitted when router in tab become master. Message data:
   - `node_id` - id of "local" router node
@@ -201,7 +201,14 @@ only one in "master" tab.
 User can close tab with active server connection. When this happens, new master
 will be elected and new faye instance will be activated.
 
-__Note.__ If you don't need cross-domain features - drop iframe-related options.
+We also do "transparent" subscribe to faye channels when user subscribes with
+tabex client. Since user can wish to do local broacasts too, strict separation
+required for "local" and "remote". We do it with addind "remote.*" prefix for
+channels which require server subscribtions.
+
+__Note.__ If you don't need cross-domain features - drop iframe-related options
+and code.
+
 
 In iframe:
 
@@ -210,6 +217,7 @@ window.tabex.router({
   origin: [ '*://*.yourdomain.com', '*://yourdomain.com' ]
 });
 ```
+
 
 In client:
 
