@@ -1,7 +1,7 @@
 'use strict';
 
 
-describe('ClientIframe', function () {
+describe('Client in iframe', function () {
   var wnd1, wnd2;
 
 
@@ -10,7 +10,7 @@ describe('ClientIframe', function () {
     wnd2 = window.open('fixtures/client_iframe.html', 'client_local_wnd2');
 
     function wait() {
-      if (!wnd1.live || !wnd2.live) {
+      if (!wnd1.liveReady || !wnd2.liveReady) {
         setTimeout(wait, 10);
         return;
       }

@@ -1,7 +1,7 @@
 'use strict';
 
 
-describe('ClientLocal', function () {
+describe('Client local', function () {
   var wnd1, wnd2;
 
 

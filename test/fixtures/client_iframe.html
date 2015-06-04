@@ -5,7 +5,12 @@
   <script src="../../node_modules/es5-shim/es5-shim.js"></script>
   <script src="../../dist/tabex.js"></script>
   <script>
+    window.liveReady = false;
     window.live = tabex.client({ iframe: 'http://127.0.0.1:9122/test/fixtures/proxy_iframe.html' });
+
+    window.live.on('!sys.master', function () {
+      window.liveReady = true;
+    });
   </script>
 </head>
 <body>
