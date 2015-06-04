@@ -15,8 +15,8 @@ GITHUB_PROJ := https://github.com//nodeca/${NPM_PACKAGE}
 lint:
 	eslint --reset .
 
-test: lint
-	mocha
+test: lint browserify
+	./node_modules/.bin/mocha-browser ./test/test.html --server
 
 
 publish:

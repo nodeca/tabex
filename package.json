@@ -18,18 +18,16 @@
     "test": "make test"
   },
   "dependencies": {
-    "inherits": "^2.0.1"
   },
   "devDependencies": {
+    "es5-shim": "^4.1.4",
     "browserify": "^10.2.1",
+    "uglifyjs": "^2.4.10",
     "chai": "^2.3.0",
     "eslint": "0.18.0",
     "eslint-plugin-nodeca": "^1.0.3",
-    "express": "^4.12.4",
-    "faye": "^1.1.1",
-    "mocha": "^2.2.4",
-    "navit": "^1.1.1",
-    "permessage-deflate": "^0.1.3",
+    "mocha": "^2.2.5",
+    "mocha-browser": "^0.2.0",
     "phantomjs": "^1.9.17"
   }
 }

@@ -1,6 +1,8 @@
 globals:
   describe: false
   it: false
+  tabex: false
+  assert: false
   before: false
   beforeEach: false
   after: false
