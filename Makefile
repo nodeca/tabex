@@ -12,6 +12,20 @@ CURR_HEAD   := $(firstword $(shell git show-ref --hash HEAD | cut -b -6) master)
 GITHUB_PROJ := https://github.com//nodeca/${NPM_PACKAGE}
 
 
+demo: lint
+	rm -rf ./demo
+	mkdir ./demo
+	jade ./support/demo_template/index.jade --pretty \
+		--out ./demo
+	stylus -u autoprefixer-stylus \
+		< ./support/demo_template/index.styl \
+		> ./demo/index.css
+	rm -rf ./support/demo_template/sample.json
+	browserify ./ -s tabex > ./demo/tabex.js
+	browserify ./support/demo_template/index.js > ./demo/index.js
+	cp ./support/demo_template/README.md ./demo/
+
+
 lint:
 	eslint --reset .
 

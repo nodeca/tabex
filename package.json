@@ -26,6 +26,9 @@
     "eslint-plugin-nodeca": "^1.0.3",
     "mocha": "^2.2.5",
     "mocha-browser": "^0.2.0",
-    "phantomjs": "^1.9.17"
+    "phantomjs": "^1.9.17",
+    "autoprefixer-stylus": "^0.7.0",
+    "jade": "^1.10.0",
+    "stylus": "^0.51.1"
   }
 }

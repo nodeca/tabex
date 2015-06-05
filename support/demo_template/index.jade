@@ -1,0 +1,38 @@
+doctype html
+html
+  head
+    title tabex demo
+    meta(charset='UTF-8')
+    meta(http-equiv='X-UA-Compatible' content='IE=edge')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+
+    script(src='https://cdn.jsdelivr.net/jquery/1.11.1/jquery.min.js')
+
+    script(src='https://cdn.jsdelivr.net/bootstrap/3.2.0/js/bootstrap.min.js')
+    link(rel='stylesheet' href='https://cdn.jsdelivr.net/bootstrap/3.2.0/css/bootstrap.css')
+
+    script(src='tabex.js')
+    script(src='index.js')
+    link(rel='stylesheet' href='index.css')
+  body
+    .container
+      h1 tabex
+        | 
+        small demo
+
+      .block
+        a.btn.btn-default(href='javascript:window.open(window.location.href, "_blank");')
+          span.glyphicon.glyphicon-plus
+          |  open one more window
+
+      .block
+        .row
+          .form-inline.col-md-4
+            input#message.form-control(type='text' placeholder='Input message here...')
+            button#send.btn.btn-primary Send
+          #messages.col-md-8
+
+
+
+    .gh-ribbon
+      a(href='https://github.com/nodeca/tabex' target='_blank') Fork me on GitHub
