@@ -13,6 +13,8 @@ tabex
 >   resources).
 > - Shared locks (run live sound notification only in single tab on server event).
 
+[Demo](http://nodeca.github.io/tabex/)
+
 __Supported browser:__
 
 - All modern and IE9+.

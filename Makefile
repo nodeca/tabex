@@ -32,6 +32,16 @@ lint:
 test: lint browserify
 	./node_modules/.bin/mocha-browser ./test/test.html --server
 
+gh-pages: demo
+	touch ./demo/.nojekyll
+	cd ./demo \
+		&& git init . \
+		&& git add . \
+		&& git commit -m "Auto-generate demo" \
+		&& git remote add remote git@github.com:nodeca/tabex.git \
+		&& git push --force remote +master:gh-pages
+	rm -rf ./demo
+
 
 publish:
 	@if test 0 -ne `git status --porcelain | wc -l` ; then \
@@ -65,5 +75,5 @@ todo:
 	grep 'TODO' -n -r ./lib 2>/dev/null || test true
 
 
-.PHONY: publish lint test todo
-.SILENT: help lint test todo
+.PHONY: publish lint test todo demo
+.SILENT: help lint test todo demo

@@ -14,24 +14,25 @@ html
     script(src='tabex.js')
     script(src='index.js')
     link(rel='stylesheet' href='index.css')
+
   body
     .container
       h1 tabex
         | 
         small demo
 
-      .block
-        a.btn.btn-default(href='javascript:window.open(window.location.href, "_blank");')
+      p.form-inline
+        input#message.form-control(type='text' placeholder='Input message here...')
+        button#send.btn.btn-default Send text
+
+        button#ping.btn.btn-default Ping
+
+        button#createwin.btn.btn-default
           span.glyphicon.glyphicon-plus
-          |  open one more window
+          |  new window
 
-      .block
-        .row
-          .form-inline.col-md-4
-            input#message.form-control(type='text' placeholder='Input message here...')
-            button#send.btn.btn-primary Send
-          #messages.col-md-8
-
+    .container.full-height
+      #log.full-height
 
 
     .gh-ribbon
