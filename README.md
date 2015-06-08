@@ -8,7 +8,7 @@ tabex
 >
 > Awesome things to do with this library:
 >
-> - Send messages (including cross-domain) between browser tabs and windows.
+> - Send messages between browser tabs and windows.
 > - Share single websocket connection when multiple tabs open (save server
 >   resources).
 > - Shared locks (run live sound notification only in single tab on server event).
@@ -22,13 +22,15 @@ __Supported browser:__
   - Each tab will not know about neighbours.
   - Clients in the same window will be ok.
 
-__Known issues__
+__Known issues:__
 
 - Safary in private mode will fallback to legacy, because it prohibits
   `localStorage` write.
-- Cross-domain mode is not available in safary by default, because of
-  [security settings](http://stackoverflow.com/questions/20401751/). Single
-  domain mode will work without problems.
+- Cross-domain messaging is not recommended due serious unfixable problems
+  in browsers:
+  - will not work in safary by default, because of
+  [security settings](http://stackoverflow.com/questions/20401751/).
+  - will not work in IE11 due multiple bugs.
 
 
 Install
@@ -164,7 +166,12 @@ In iframe:
 
 ```js
 window.tabex.router({
-  origin: [ '*://*.yourdomain.com', '*://yourdomain.com' ]
+  origin: [
+    'http://yourdomain.com',
+    'https://yourdomain.com',
+    'http://forum.yourdomain.com',
+    'https://forum.yourdomain.com'
+  ]
 });
 ```
 
@@ -179,11 +186,8 @@ __Warning! Never set `*` to allowed origins value.__ That's not secure.
 Channels `!sys.*` are reserved for internal needs and extensions. Also `tabex`
 already has built-in events, emitted on some state changes:
 
-- __!sys.master__ - emitted when router in tab become master. Message data:
-  - `node_id` - id of "local" router node
-  - `master_id` - id of node that become master
-- __!sys.channels.refresh__ - emitted when any tab changes list of subscribed
-  channels and after `!sys.master` event. Message data:
+- __!sys.channels.refresh__ - emitted when list of subscribed channels changed
+  (or in specific case, when master tab switched). Message data:
   - `channels` - array of all channels subscribed in all tabs
 - __!sys.channels.add__ - emitted by `tabex.client` to notify router about new
   subscribed channel. Message data:
@@ -192,6 +196,13 @@ already has built-in events, emitted on some state changes:
   subscriptions to channel gone.  Message data:
   - `channel` - channel name
 - __!sys.error__ - emitted on internal errors, for debug.
+- __!sys.master__ - sepecific for localStorage-based router. Emitted when tab
+  become master. Message data:
+  - `node_id` - id of "local" router node
+  - `master_id` - id of node that become master
+
+__Note.__ `!sys.master` event is broadcasted only when `localStorage` router
+used. You should NOT rely on it in your general application logic.
 
 
 ### Sharing single server connection (faye)
