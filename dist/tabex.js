@@ -1,4 +1,4 @@
-/*! tabex 1.0.0 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*! tabex 1.0.1 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib');
@@ -224,6 +224,7 @@ Tabex.router = function (options) {
   /* eslint-disable no-new */
   new Tunnel.TunnelRouter({
     router: routerInstances[namespace],
+    namespace: namespace,
     origin: options.origin
   });
 
@@ -239,7 +240,7 @@ module.exports = Tabex;
 'use strict';
 
 
-/* global window */
+/* global document, window */
 var localStorage = window.localStorage;
 
 
@@ -248,6 +249,9 @@ var fake_storage = {};
 // Check is `localStorage` available and writable
 //
 var LS_OK = (function () {
+  // IE 8 does not send `key` and `newValue` in event
+  if (document.documentMode && document.documentMode < 9) { return false; }
+
   if (!localStorage) { return false; }
 
   try {
@@ -308,6 +312,7 @@ module.exports = LocalStorage;
 
 /* global window */
 var LocalStorage = require('./local_storage');
+var $$ = require('./utils');
 
 
 var TIMEOUT = 4000;
@@ -333,13 +338,20 @@ function Router(options) {
   this.__router_channels_prefix__ = this.__namespace__ + 'subscribed_';
   this.__router_channels__ = {};
 
+  // IE broadcasts storage events also to the same window, we should filter that messages
+  this.__storage_events_filter__ = [];
+
+  for (var i = 0; i < 100; i++) {
+    this.__storage_events_filter__.push('');
+  }
+
   this.__ls__ = new LocalStorage();
 
   // Id of master tab
   this.__master_id__ = null;
 
   // Handle `localStorage` update
-  window.addEventListener('storage', function (e) {
+  $$.addEvent(window, 'storage', function (e) {
     // In IE 9 without delay `e.newValue` will be broken
     // http://stackoverflow.com/questions/9292576/localstorage-getitem-returns-old-data-in-ie-9
     setTimeout(function () {
@@ -351,12 +363,18 @@ function Router(options) {
   // http://stackoverflow.com/questions/3775566/javascript-question-onbeforeunload-or-onunload
   //
   this.__destroyed__ = false;
-  window.addEventListener('beforeunload', this.__destroy__.bind(this));
-  window.addEventListener('unload', this.__destroy__.bind(this));
+  $$.addEvent(window, 'beforeunload', function () {
+    self.__destroy__();
+  });
+  $$.addEvent(window, 'unload', function () {
+    self.__destroy__();
+  });
 
   // Update current tab info and check master alive
   this.__check_master__();
-  setInterval(this.__check_master__.bind(this), UPDATE_INTERVAL);
+  setInterval(function () {
+    self.__check_master__();
+  }, UPDATE_INTERVAL);
 }
 
 
@@ -384,14 +402,18 @@ Router.prototype.broadcast = function (channel, message) {
     return;
   }
 
-  // Add message to `localStorage` to distribute over Router instances
-  this.__ls__.setItem(this.__namespace__ + 'broadcast', JSON.stringify({
+  var serializedMessage = JSON.stringify({
     channel: channel,
     message: message,
 
     // Add random to be sure that `localStorage` sent event even new massage is same than previous
     random: Math.floor(Math.random() * 1e10)
-  }));
+  });
+
+  // Add message to `localStorage` to distribute over Router instances
+  this.__storage_events_filter__.shift();
+  this.__storage_events_filter__.push(this.__namespace__ + 'broadcast' + '_' + serializedMessage);
+  this.__ls__.setItem(this.__namespace__ + 'broadcast', serializedMessage);
 
   // Emit message for all clients and proxies registered on this router
   this.__handlers__.forEach(function (handler) {
@@ -434,6 +456,8 @@ Router.prototype.__on_master_changed__ = function (newMasterID) {
   if (!newMasterID) {
     // Select random master (tab with smallest ID becomes master)
     if (this.__get_alive_router_ids__().sort()[0] === this.__node_id__) {
+      this.__storage_events_filter__.pop();
+      this.__storage_events_filter__.push(this.__namespace__ + 'master' + '_' + this.__node_id__);
       this.__ls__.setItem(this.__namespace__ + 'master', this.__node_id__);
       this.__on_master_changed__(this.__node_id__);
     }
@@ -455,26 +479,18 @@ Router.prototype.__on_master_changed__ = function (newMasterID) {
 };
 
 
-// Receive resended message from master and send it to tab subscribers
-//
-Router.prototype.__on_data_changed__ = function (serializedData) {
-  var data = JSON.parse(serializedData);
-
-  this.__receive_message__(data.channel, data.message);
-};
-
-
 // localStorage change handler. Updates master ID, receive subscribe requests
 //
 Router.prototype.__on_changed__ = function (e) {
+
+  // IE broadcasts storage events also to the same window, we should filter that messages
+  if (this.__storage_events_filter__.indexOf(e.key + '_' + e.newValue) !== -1) {
+    return;
+  }
+
   // Master changed
   if (e.key === this.__namespace__ + 'master') {
     this.__on_master_changed__(e.newValue);
-  }
-
-  // Receive message from master
-  if (e.key === this.__namespace__ + 'message') {
-    this.__on_data_changed__(e.newValue);
   }
 
   // Channels list changed
@@ -558,6 +574,8 @@ Router.prototype.__update_channels_list__ = function () {
 
   // Update channels list if changed
   if (this.__ls__.getItem(this.__router_channels_prefix__ + this.__node_id__) !== serializedChannels) {
+    this.__storage_events_filter__.pop();
+    this.__storage_events_filter__.push(this.__router_channels_prefix__ + this.__node_id__ + '_' + serializedChannels);
     this.__ls__.setItem(this.__router_channels_prefix__ + this.__node_id__, serializedChannels);
     this.__on_channels_list_changed__();
   }
@@ -612,6 +630,8 @@ Router.prototype.__check_master__ = function () {
 
   // If master tab not found - become master
   if (this.__get_alive_router_ids__().indexOf(this.__master_id__) === -1) {
+    this.__storage_events_filter__.pop();
+    this.__storage_events_filter__.push(this.__namespace__ + 'master' + '_' + this.__node_id__);
     this.__ls__.setItem(this.__namespace__ + 'master', this.__node_id__);
     this.__on_master_changed__(this.__node_id__);
   }
@@ -620,13 +640,14 @@ Router.prototype.__check_master__ = function () {
 
 module.exports = Router;
 
-},{"./local_storage":4}],6:[function(require,module,exports){
+},{"./local_storage":4,"./utils":7}],6:[function(require,module,exports){
 // Tunnel to communicate between client in root window and router in iframe
 //
 'use strict';
 
 
 /* global document, window */
+var $$ = require('./utils');
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -658,41 +679,50 @@ function TunnelClient(options) {
   this.__iframe__.onload = function () {
 
     // Setup target for messages from iframe (we should not use `*` for security reasons)
-    self.__iframe__.contentWindow.postMessage({
-      origin: window.location.origin,
+    self.__iframe__.contentWindow.postMessage(JSON.stringify({
+      // `window.location.origin` available from IE 11
+      origin: window.location.origin || window.location.protocol + '//' + window.location.host,
       namespace: self.__namespace__
-    }, self.__iframe_url__);
+    }), self.__iframe_url__);
 
     self.__iframe_done__ = true;
 
     // Send all pending messages
     self.__pending__.forEach(function (data) {
-      self.__iframe__.contentWindow.postMessage(data, self.__iframe_url__);
+      self.__iframe__.contentWindow.postMessage(JSON.stringify(data), self.__iframe_url__);
     });
 
     self.__pending__ = null;
   };
 
   // Listen messages from iframe
-  window.addEventListener('message', function (event) {
+  $$.addEvent(window, 'message', function (event) {
     // Check sender origin
     if (self.__iframe_url__.indexOf(event.origin) !== 0) {
       return;
     }
 
+    var data;
+
+    try {
+      data = JSON.parse(event.data);
+    } catch (__) {
+      return;
+    }
+
     // Ignore messages from another namespace (and messages from other possible senders)
-    if (event.data.namespace !== self.__namespace__) {
+    if (data.namespace !== self.__namespace__) {
       return;
     }
 
     self.__handlers__.forEach(function (handler) {
-      handler(event.data.channel, event.data.message);
+      handler(data.channel, data.message);
     });
   });
 
   this.__iframe__.src = this.__iframe_url__;
 
-  document.addEventListener('DOMContentLoaded', function () {
+  $$.addEvent(document, 'DOMContentLoaded', function () {
     document.querySelector('body').appendChild(self.__iframe__);
   });
 }
@@ -710,11 +740,11 @@ TunnelClient.prototype.broadcast = function (channel, message) {
 
   // Send message to iframe
   } else {
-    this.__iframe__.contentWindow.postMessage({
+    this.__iframe__.contentWindow.postMessage(JSON.stringify({
       channel: channel,
       message: message,
       namespace: this.__namespace__
-    }, this.__iframe_url__);
+    }), this.__iframe_url__);
   }
 };
 
@@ -741,7 +771,10 @@ function TunnelRouter(options) {
   var self = this, i;
 
   this.__namespace__ = options.namespace || 'tabex_default_';
-  this.__origin_first_check__ = options.origin || window.location.origin;
+
+  // `window.location.origin` available from IE 11
+  this.__origin_first_check__ = options.origin ||
+                                (window.location.origin || window.location.protocol + '//' + window.location.host);
 
   // Always convert origin list to array
   if (!Array.isArray(this.__origin_first_check__)) {
@@ -762,7 +795,7 @@ function TunnelRouter(options) {
   this.__router__ = options.router;
 
   // Handle messages from parent window
-  window.addEventListener('message', function (event) {
+  $$.addEvent(window, 'message', function (event) {
     var isOriginValid = false;
 
     // Check origin
@@ -781,27 +814,35 @@ function TunnelRouter(options) {
       }
     }
 
+    var data;
+
+    try {
+      data = JSON.parse(event.data);
+    } catch (__) {
+      return;
+    }
+
     // Ignore messages from another namespace (and messages from other possible senders)
-    if (event.data.namespace !== self.__namespace__) {
+    if (data.namespace !== self.__namespace__) {
       return;
     }
 
     // Save real origin from parent window and start routing
-    if (!self.__origin__ && event.data.origin) {
-      self.__origin__ = event.data.origin;
+    if (!self.__origin__ && data.origin) {
+      self.__origin__ = data.origin;
 
       self.__router__.onmessage(function (channel, message) {
-        window.parent.postMessage({
+        window.parent.postMessage(JSON.stringify({
           channel: channel,
           message: message,
           namespace: self.__namespace__
-        }, self.__origin__);
+        }), self.__origin__);
       });
 
       return;
     }
 
-    self.__router__.broadcast(event.data.channel, event.data.message);
+    self.__router__.broadcast(data.channel, data.message);
   });
 }
 
@@ -809,8 +850,11 @@ function TunnelRouter(options) {
 exports.TunnelClient = TunnelClient;
 exports.TunnelRouter = TunnelRouter;
 
-},{}],7:[function(require,module,exports){
+},{"./utils":7}],7:[function(require,module,exports){
 'use strict';
+
+
+/* global document */
 
 
 // Run each function with params and callback after all
@@ -840,6 +884,18 @@ exports.asyncEach = function (functions/* , params..., callback */) {
   }
 
   next.apply(this, params);
+};
+
+
+// `addEventListener` not supported in IE <= 8, fallback to `attachEvent`
+//
+exports.addEvent = function (target, type, listener) {
+  if (document.addEventListener) {
+    target.addEventListener(type, listener);
+    return;
+  }
+
+  target.attachEvent('on' + type, listener);
 };
 
 },{}]},{},[1])(1)
