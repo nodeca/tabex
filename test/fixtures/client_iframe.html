@@ -5,7 +5,10 @@
   <script src="../../dist/tabex.js"></script>
   <script>
     window.liveReady = false;
-    window.live = tabex.client({ iframe: 'http://127.0.0.1:9122/test/fixtures/proxy_iframe.html' });
+    window.live = tabex.client({
+      iframe: 'http://127.0.0.1:9122/test/fixtures/proxy_iframe.html',
+      namespace: 'client_iframe_'
+    });
 
     window.live.on('!sys.master', function () {
       window.liveReady = true;
