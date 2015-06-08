@@ -107,6 +107,28 @@ describe('Client local', function () {
   });
 
 
+  it('.emit multiple times in the same window (IE bug)', function (done) {
+    var cnt = 0, timerId;
+
+    wnd1.live.on('test.channel.7', function () {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+
+      cnt++;
+
+      timerId = setTimeout(function () {
+        assert.equal(cnt, 3);
+        done();
+      }, 200);
+    });
+
+    wnd1.live.emit('test.channel.7', { foo: 'bar' }, true);
+    wnd1.live.emit('test.channel.7', { foo: 'bar' }, true);
+    wnd1.live.emit('test.channel.7', { foo: 'bar' }, true);
+  });
+
+
   after(function () {
     wnd1.close();
     wnd2.close();
