@@ -111,6 +111,14 @@ broadcasted to all clients except current one. To include existing client -
 set `toSelf` to `true`.
 
 
+#### client.lock(id, [timeout, ] fn):
+
+- __id__ - lock identifier
+- __timeout__ - optional, lock lifetime in ms, default 5000
+- __fn(unlock)__ - handler will be executed if lock is acquired
+  - __unlock__ - function to release acquired lock
+
+
 #### client.filterIn(fn), client.filterOut(fn)
 
 Add transformers for incoming (handled) and outgoing (emitted) messages.
@@ -195,9 +203,15 @@ already has built-in events, emitted on some state changes:
 - __!sys.channels.remove__ - emitted by `tabex.client` to notify router that all
   subscriptions to channel gone.  Message data:
   - `channel` - channel name
+- __!sys.lock.request__ - emitted by `tabex.client` to try acquire lock. Message data:
+  - __id__ - lock identifier
+  - __timeout__ - lock lifetime in ms
+- __!sys.lock.acquired__ -  emitted when router acquire lock for client
+  - __request_id__ - request message id
+- __!sys.lock.release - emitted by `tabex.client` to release already acquired lock. Message data:
+  - __id__ - lock identifier
 - __!sys.error__ - emitted on internal errors, for debug.
-- __!sys.master__ - sepecific for localStorage-based router. Emitted when tab
-  become master. Message data:
+- __!sys.master__ - sepecific for localStorage-based router. Message data:
   - `node_id` - id of "local" router node
   - `master_id` - id of node that become master
 

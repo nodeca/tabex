@@ -107,6 +107,45 @@ describe('Client in iframe', function () {
   });
 
 
+  it('.lock', function (done) {
+    var execCnt = 0;
+
+    wnd1.live.lock('test_lock_1', function () {
+      execCnt++;
+    });
+
+    wnd2.live.lock('test_lock_1', 3000, function () {
+      execCnt++;
+    });
+
+    setTimeout(function () {
+      assert.equal(execCnt, 1);
+      done();
+    }, 200);
+  });
+
+
+  it('.lock - unlock', function (done) {
+    var execCnt = 0;
+
+    wnd2.live.lock('test_lock_2', function (unlock) {
+      execCnt++;
+      unlock();
+    });
+
+    setTimeout(function () {
+      wnd1.live.lock('test_lock_2', 3000, function () {
+        execCnt++;
+      });
+    }, 50);
+
+    setTimeout(function () {
+      assert.equal(execCnt, 2);
+      done();
+    }, 200);
+  });
+
+
   after(function () {
     wnd1.close();
     wnd2.close();
