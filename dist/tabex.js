@@ -1,4 +1,4 @@
-/*! tabex 1.0.1 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*! tabex 1.0.2 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib');
@@ -42,6 +42,38 @@ function Client(options) {
 
   this.__router__.onmessage(function (channel, message) {
     self.__onmessage__(channel, message);
+  });
+
+  // Lock handlers
+  this.__lock_handlers__ = {};
+
+  // If client make lock request - store handler and remove it from message
+  this.filterOut(function (channel, message, callback) {
+    if (channel === '!sys.lock.request') {
+      var fn = message.data.fn;
+      var lockId = message.data.id;
+
+      delete message.data.fn;
+
+      // Wrap handler to pass unlock function into it
+      self.__lock_handlers__[message.id] = function () {
+        fn(function unlock() {
+          self.emit('!sys.lock.release', { id: lockId });
+        });
+      };
+    }
+
+    callback(channel, message);
+  });
+
+  // If lock acquired - execute handler
+  this.filterIn(function (channel, message, callback) {
+    if (channel === '!sys.lock.acquired' && self.__lock_handlers__[message.data.request_id]) {
+      self.__lock_handlers__[message.data.request_id]();
+      delete self.__lock_handlers__[message.data.request_id];
+    }
+
+    callback(channel, message);
   });
 }
 
@@ -107,6 +139,22 @@ Client.prototype.off = function (channel, handler) {
 
     return result;
   }, []);
+};
+
+
+// Try acquire lock and exec `fn` if success
+//
+// - id - lock identifier
+// - timeout - optional, lock lifetime in ms, default `5000`
+// - fn - handler will be executed if lock is acquired
+//
+Client.prototype.lock = function (id, timeout, fn) {
+  if (!fn) {
+    fn = timeout;
+    timeout = 5000;
+  }
+
+  this.emit('!sys.lock.request', { id: id, timeout: timeout, fn: fn });
 };
 
 
@@ -310,12 +358,14 @@ module.exports = LocalStorage;
 'use strict';
 
 
-/* global window */
+/* global document, window */
 var LocalStorage = require('./local_storage');
 var $$ = require('./utils');
 
 
+// Max lifetime of router record in storage
 var TIMEOUT = 4000;
+// Update router record frequency
 var UPDATE_INTERVAL = TIMEOUT / 4;
 
 
@@ -334,9 +384,12 @@ function Router(options) {
   this.__node_id__ = Math.floor(Math.random() * 1e10) + 1;
   this.__last_message_cnt__ = 0;
   this.__handlers__ = [];
+  this.__router_channels__ = {};
+
+  // Constants for convenience
   this.__router_id_prefix__ = this.__namespace__ + 'router_';
   this.__router_channels_prefix__ = this.__namespace__ + 'subscribed_';
-  this.__router_channels__ = {};
+  this.__lock_prefix__ = this.__namespace__ + 'lock_';
 
   // IE broadcasts storage events also to the same window, we should filter that messages
   this.__storage_events_filter__ = [];
@@ -352,11 +405,16 @@ function Router(options) {
 
   // Handle `localStorage` update
   $$.addEvent(window, 'storage', function (e) {
-    // In IE 9 without delay `e.newValue` will be broken
-    // http://stackoverflow.com/questions/9292576/localstorage-getitem-returns-old-data-in-ie-9
-    setTimeout(function () {
-      self.__on_changed__(e);
-    }, 1);
+    // IE needs kludge because event fire before data was saved
+    if ('onstoragecommit' in document) {
+      setTimeout(function () {
+        self.__on_changed__(e);
+      }, 1);
+
+      return;
+    }
+
+    self.__on_changed__(e);
   });
 
   // Handle page unload (listen `onbeforeunload` and `onunload` to ensure that data is stored successfully)
@@ -375,6 +433,11 @@ function Router(options) {
   setInterval(function () {
     self.__check_master__();
   }, UPDATE_INTERVAL);
+
+  // Remove outdated lock records
+  setInterval(function () {
+    self.__locks_cleanup__();
+  }, 1000);
 }
 
 
@@ -398,6 +461,20 @@ Router.prototype.broadcast = function (channel, message) {
     this.__router_channels__[message.data.channel] = this.__router_channels__[message.data.channel] || 0;
     this.__router_channels__[message.data.channel]--;
     this.__update_channels_list__();
+
+    return;
+  }
+
+  // If it is system lock message - try acquire lock
+  if (channel === '!sys.lock.request') {
+    this.__lock__(message.data.id, message.id, message.data.timeout);
+
+    return;
+  }
+
+  // If it is system unlock message - remove lock data
+  if (channel === '!sys.lock.release') {
+    this.__ls__.removeItem(this.__lock_prefix__ + message.data.id);
 
     return;
   }
@@ -444,6 +521,89 @@ Router.prototype.onmessage = function (handler) {
     // Send channels info
     self.__on_channels_list_changed__();
   }, 0);
+};
+
+
+// Try acquire lock
+//
+// - lockId (String)
+// - requestId (String)
+// - timeout (Number)
+//
+Router.prototype.__lock__ = function (lockId, requestId, timeout) {
+  var self = this;
+  var lockKey = this.__lock_prefix__ + lockId;
+  var lockValue = this.__ls__.getItem(lockKey);
+
+  if (lockValue) {
+    try {
+      lockValue = JSON.parse(lockValue);
+    } catch (__) {
+      lockValue = null;
+    }
+  }
+
+  // If `expire` not in past - lock already acquired, exit here
+  if (lockValue && lockValue.expire > Date.now()) {
+    return;
+  }
+
+  // Try acquire lock
+  this.__ls__.setItem(lockKey, JSON.stringify({ expire: timeout + Date.now(), requestId: requestId }));
+
+  // Read lock value again to check `requestId` (race condition here - other tab may rewrite value in store)
+  lockValue = this.__ls__.getItem(lockKey);
+
+  if (lockValue) {
+    try {
+      lockValue = JSON.parse(lockValue);
+    } catch (__) {
+      lockValue = null;
+    }
+  }
+
+  // If `requestId` is not same - other tab acquire lock, exit here
+  if (!lockValue || lockValue.requestId !== requestId) {
+    return;
+  }
+
+  // Here lock acquired - send message to clients
+  this.__handlers__.forEach(function (handler) {
+    handler('!sys.lock.acquired', {
+      data: {
+        request_id: requestId
+      },
+      node_id: self.__node_id__,
+      id: self.__node_id__ + '_' + (self.__last_message_cnt__++)
+    });
+  });
+};
+
+
+// Remove outdated lock records from storage
+//
+Router.prototype.__locks_cleanup__ = function () {
+  for (var i = 0, key, val; i < this.__ls__.length; i++) {
+    key = this.__ls__.key(i);
+
+    // Filter localStorage records by prefix
+    if (key.indexOf(this.__lock_prefix__) !== 0) {
+      continue;
+    }
+
+    val = this.__ls__.getItem(key);
+
+    try {
+      val = JSON.parse(val);
+    } catch (__) {
+      val = null;
+    }
+
+    // If lock expire or record is broken - remove it
+    if (!val || val.expire < Date.now()) {
+      this.__ls__.removeItem(key);
+    }
+  }
 };
 
 
