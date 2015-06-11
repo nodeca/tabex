@@ -208,7 +208,8 @@ already has built-in events, emitted on some state changes:
   - __timeout__ - lock lifetime in ms
 - __!sys.lock.acquired__ -  emitted when router acquire lock for client
   - __request_id__ - request message id
-- __!sys.lock.release - emitted by `tabex.client` to release already acquired lock. Message data:
+- __!sys.lock.release__ - emitted by `tabex.client` to release already acquired
+  lock. Message data:
   - __id__ - lock identifier
 - __!sys.error__ - emitted on internal errors, for debug.
 - __!sys.master__ - sepecific for localStorage-based router. Message data:
@@ -216,7 +217,8 @@ already has built-in events, emitted on some state changes:
   - `master_id` - id of node that become master
 
 __Note.__ `!sys.master` event is broadcasted only when `localStorage` router
-used. You should NOT rely on it in your general application logic.
+used. You should NOT rely on it in your general application logic. Use locks
+instead to filter single handler on broadcasts.
 
 
 ### Sharing single server connection (faye)
