@@ -1,3 +1,11 @@
+1.0.3 / 2015-06-16
+------------------
+
+- Fixed races in locks logic for localStorage transport.
+- Fixed timer issues in Firefox for Android.
+- Fixed compatibility with Chrome on iOS.
+
+
 1.0.2 / 2015-06-11
 ------------------
 

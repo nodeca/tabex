@@ -26,6 +26,8 @@ __Known issues:__
 
 - Safary in private mode will fallback to legacy, because it prohibits
   `localStorage` write.
+- Chrome on iOS will fallback to legacy, because it does not send
+  `localStorage` events between tabs.
 - Cross-domain messaging is not recommended due serious unfixable problems
   in browsers:
   - will not work in safary by default, because of
