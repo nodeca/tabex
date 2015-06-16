@@ -118,6 +118,8 @@ set `toSelf` to `true`.
 - __fn(unlock)__ - handler will be executed if lock is acquired
   - __unlock__ - function to release acquired lock
 
+__Note__. Getting lock takes 30ms when localStorage used as events transport.
+
 
 #### client.filterIn(fn), client.filterOut(fn)
 

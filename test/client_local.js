@@ -159,7 +159,7 @@ describe('Client local', function () {
       wnd1.live.lock('test_lock_2', 3000, function () {
         execCnt++;
       });
-    }, 50);
+    }, 100);
 
     setTimeout(function () {
       assert.equal(execCnt, 2);
