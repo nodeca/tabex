@@ -308,6 +308,11 @@ flive.on('!sys.channels.refresh', function (data) {
     return;
   }
 
+  // Filter channels by prefix `local.` and system channels (starts with `!sys.`)
+  var channels = data.channels.filter(function (channel) {
+    return channel.indexOf('local.') !== 0 && channel.indexOf('!sys.') !== 0;
+  });
+
   // Unsubscribe removed channels
   //
   Object.keys(trackedChannels).forEach(function (channel) {
@@ -321,7 +326,7 @@ flive.on('!sys.channels.refresh', function (data) {
   //
   data.channels.forEach(function (channel) {
     if (!trackedChannels.hasOwnProperty(channel)) {
-      trackedChannels[channel] = fayeClient.subscribe(channel, function (message) {
+      trackedChannels[channel] = fayeClient.subscribe('/' + channel.replace(/\./g, '!!'), function (message) {
         flive.emit(channel, message.data);
       });
     }
@@ -329,28 +334,12 @@ flive.on('!sys.channels.refresh', function (data) {
 });
 
 
-// Convert channel names to faye-compatible format: add '/' at start of
-// channel name and replace '.' with '!!'
+// Resend events without prefix `local.` and prefix `!sys` to server, convert channel
+// names to faye-compatible format: add '/' at start of channel name and replace '.' with '!!'
 //
 flive.filterIn(function (channel, message, callback) {
-  if (channel.indexOf('remote.') === 0) {
-    callback('/' + channel.replace(/\./g, '!!'), message);
-    return;
-  }
-
-  callback(channel, message);
-});
-
-
-// Resend local events with prefix `/remote!!` to server
-//
-flive.filterIn(function (channel, message, callback) {
-  if (channel.indexOf('/remote!!') === 0) {
-    // Make sure current tab is master
-    if (fayeClient) {
-      fayeClient.publish(channel, message.data);
-    }
-
+  if (fayeClient && channel.indexOf('local.') !== 0 && channel.indexOf('!sys.') !== 0) {
+    fayeClient.publish('/' + channel.replace(/\./g, '!!'), message);
     return;
   }
 
