@@ -1,9 +1,4 @@
-/*! tabex 1.0.3 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-'use strict';
-
-module.exports = require('./lib');
-
-},{"./lib":3}],2:[function(require,module,exports){
+/*! tabex 1.0.4 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // Base client class
 //
 'use strict';
@@ -204,7 +199,7 @@ Client.prototype.__onmessage__ = function (channel, message) {
 
 module.exports = Client;
 
-},{"./utils":8}],3:[function(require,module,exports){
+},{"./utils":7}],2:[function(require,module,exports){
 'use strict';
 
 
@@ -282,33 +277,32 @@ Tabex.router = function (options) {
 
 module.exports = Tabex;
 
-},{"./client":2,"./router":5,"./tunnel":7}],4:[function(require,module,exports){
+},{"./client":1,"./router":4,"./tunnel":6}],3:[function(require,module,exports){
 // localStorage wrapper with fallback to memory emulation
 //
 'use strict';
 
 
 /* global navigator, document, window */
-var localStorage = window.localStorage;
-
-
+var localStorage;
 var fake_storage = {};
 
 // Check is `localStorage` available and writable
 //
 var LS_OK = (function () {
+  try {
+    localStorage = window.localStorage; // can throw SecurityError in chrome if disabled
+    if (!localStorage) { return false; }
+
+    localStorage.setItem('live_local_storage_is_writable_test', '');
+    localStorage.removeItem('live_local_storage_is_writable_test');
+  } catch (__) { return false; }
+
   // IE 8 does not send `key` and `newValue` in event
   if (document.documentMode && document.documentMode < 9) { return false; }
 
   // In Chrome browser on iOS localStorage events are not emitted between tabs
   if (navigator.userAgent.match('CriOS')) { return false; }
-
-  if (!localStorage) { return false; }
-
-  try {
-    localStorage.setItem('live_local_storage_is_writable_test', '');
-    localStorage.removeItem('live_local_storage_is_writable_test');
-  } catch (__) { return false; }
 
   return true;
 })();
@@ -355,7 +349,7 @@ LocalStorage.prototype.key = function (index) {
 
 module.exports = LocalStorage;
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 // LocalStorage router
 //
 'use strict';
@@ -644,6 +638,9 @@ Router.prototype.__on_master_changed__ = function (newMasterID) {
       id: self.__node_id__ + '_' + (self.__last_message_cnt__++)
     });
   });
+
+  // Send channels info
+  self.__on_channels_list_changed__();
 };
 
 
@@ -808,7 +805,7 @@ Router.prototype.__check_master__ = function () {
 
 module.exports = Router;
 
-},{"./local_storage":4,"./timer":6,"./utils":8}],6:[function(require,module,exports){
+},{"./local_storage":3,"./timer":5,"./utils":7}],5:[function(require,module,exports){
 // Timers through web workers or fallback to basic if web workers not supported
 //
 'use strict';
@@ -1063,7 +1060,7 @@ exports.clearInterval = function (id) {
   });
 };
 
-},{}],7:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // Tunnel to communicate between client in root window and router in iframe
 //
 'use strict';
@@ -1273,7 +1270,7 @@ function TunnelRouter(options) {
 exports.TunnelClient = TunnelClient;
 exports.TunnelRouter = TunnelRouter;
 
-},{"./utils":8}],8:[function(require,module,exports){
+},{"./utils":7}],7:[function(require,module,exports){
 'use strict';
 
 
@@ -1321,5 +1318,10 @@ exports.addEvent = function (target, type, listener) {
   target.attachEvent('on' + type, listener);
 };
 
-},{}]},{},[1])(1)
+},{}],8:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./lib');
+
+},{"./lib":2}]},{},[8])(8)
 });
