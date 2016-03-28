@@ -1,3 +1,10 @@
+1.0.4 / 2016-03-28
+------------------
+
+- Fixed localStorage exception in chrome.
+- Update channels info after master change.
+
+
 1.0.3 / 2015-06-16
 ------------------
 
