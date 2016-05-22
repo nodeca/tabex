@@ -24,13 +24,13 @@ __Supported browser:__
 
 __Known issues:__
 
-- Safary in private mode will fallback to legacy, because it prohibits
+- Safari in private mode will fallback to legacy, because it prohibits
   `localStorage` write.
 - Chrome on iOS will fallback to legacy, because it does not send
   `localStorage` events between tabs.
 - Cross-domain messaging is not recommended due serious unfixable problems
   in browsers:
-  - will not work in safary by default, because of
+  - will not work in Safari by default, because of
   [security settings](http://stackoverflow.com/questions/20401751/).
   - will not work in IE11 due multiple bugs.
 
