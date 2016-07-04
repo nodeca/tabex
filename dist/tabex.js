@@ -1,4 +1,4 @@
-/*! tabex 1.0.4 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*! tabex 1.0.5 https://github.com//nodeca/tabex @license MIT */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tabex = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // Base client class
 //
 'use strict';
@@ -403,6 +403,13 @@ function Router(options) {
 
   // Handle `localStorage` update
   $$.addEvent(window, 'storage', function (e) {
+    if (e.key === null) {
+      // If event is caused by `localStorage.clear()` `key` will be null. Skip this
+      // event and reestablish normal behaviour by `.__check_master__()` call.
+      self.__check_master__();
+      return;
+    }
+
     // IE needs kludge because event fire before data was saved
     if ('onstoragecommit' in document) {
       setTimeout(function () {
@@ -639,6 +646,10 @@ Router.prototype.__on_master_changed__ = function (newMasterID) {
     });
   });
 
+  // Update channels list for this tab before sending channels info. Needed if
+  // master changed by calling `localStorage.clear()`
+  self.__update_channels_list__(true);
+
   // Send channels info
   self.__on_channels_list_changed__();
 };
@@ -725,7 +736,7 @@ Router.prototype.__get_alive_router_ids__ = function () {
 
 // Update tab channels list
 //
-Router.prototype.__update_channels_list__ = function () {
+Router.prototype.__update_channels_list__ = function (silent) {
   var self = this;
   var channels = [];
 
@@ -742,7 +753,9 @@ Router.prototype.__update_channels_list__ = function () {
     this.__storage_events_filter__.pop();
     this.__storage_events_filter__.push(this.__router_channels_prefix__ + this.__node_id__ + '_' + serializedChannels);
     this.__ls__.setItem(this.__router_channels_prefix__ + this.__node_id__, serializedChannels);
-    this.__on_channels_list_changed__();
+    if (!silent) {
+      this.__on_channels_list_changed__();
+    }
   }
 };
 
