@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf=8">
+  <script src="../../dist/tabex.js"></script>
+  <script>
+    window.liveReady = false;
+    window.domLoaded = false;
+
+    window.initTabex = function() {
+      window.live = tabex.client({
+        iframe: 'http://127.0.0.1:9122/test/fixtures/proxy_iframe.html',
+        namespace: 'client_iframe_'
+      });
+
+      window.live.on('!sys.master', function () {
+        window.liveReady = true;
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      window.domLoaded = true;
+    });
+  </script>
+</head>
+<body>
+</body>
+</html>
