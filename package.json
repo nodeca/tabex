@@ -1,6 +1,6 @@
 {
   "name": "tabex",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Cross-tab message bus for browsers.",
   "keywords": [
     "tab",

@@ -1,3 +1,9 @@
+1.0.6 / 2017-03-02
+------------------
+
+- Fixed iframe init when called after page load, #14. Thanks to @Kukunin.
+
+
 1.0.5 / 2016-06-04
 ------------------
 
