@@ -23,8 +23,8 @@ describe('Client in iframe', function () {
 
 
   it('.emit', function (done) {
-    wnd1.live.on('test.channel.1', function (data, cahnnel) {
-      assert.strictEqual(cahnnel, 'test.channel.1');
+    wnd1.live.on('test.channel.1', function (data, channel) {
+      assert.strictEqual(channel, 'test.channel.1');
       assert.strictEqual(data, 'test data');
 
       done();
@@ -145,6 +145,43 @@ describe('Client in iframe', function () {
     }, 200);
   });
 
+  describe('lazy init', function() {
+    var asyncWnd;
+
+    before(function (done) {
+      asyncWnd = window.open('fixtures/client_iframe_async.html', 'client_local_async');
+
+      function waitDOMContentLoaded() {
+        if (!asyncWnd.domLoaded) {
+          setTimeout(waitDOMContentLoaded, 10);
+          return;
+        }
+
+        done();
+      }
+
+      waitDOMContentLoaded();
+    });
+
+    it('still works', function(done) {
+      asyncWnd.initTabex();
+
+      function checkIfLive() {
+        if (!asyncWnd.liveReady) {
+          setTimeout(checkIfLive, 10);
+          return;
+        }
+
+        done();
+      }
+
+      checkIfLive();
+    });
+
+    after(function () {
+      asyncWnd.close();
+    });
+  });
 
   after(function () {
     wnd1.close();
