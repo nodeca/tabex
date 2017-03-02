@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>tabex demo</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.2.0/css/bootstrap.css">
+    <script src="tabex.js"></script>
+    <script src="index.js"></script>
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>
+        tabex
+         <small>demo</small>
+      </h1>
+      <p class="form-inline">
+        <input id="message" type="text" placeholder="Input message here..." class="form-control">
+        <button id="send" class="btn btn-default">Send text</button>
+        <button id="ping" class="btn btn-default">Ping</button>
+        <button id="createwin" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span> new window</button>
+      </p>
+    </div>
+    <div class="container full-height">
+      <div id="log" class="full-height"></div>
+    </div>
+    <div class="gh-ribbon"><a href="https://github.com/nodeca/tabex" target="_blank">Fork me on GitHub</a></div>
+  </body>
+</html>
