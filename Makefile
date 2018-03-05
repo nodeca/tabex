@@ -1,5 +1,3 @@
-PATH        := ./node_modules/.bin:${PATH}
-
 NPM_PACKAGE := $(shell node -e 'process.stdout.write(require("./package.json").name)')
 NPM_VERSION := $(shell node -e 'process.stdout.write(require("./package.json").version)')
 
@@ -15,19 +13,19 @@ GITHUB_PROJ := https://github.com//nodeca/${NPM_PACKAGE}
 demo: lint
 	rm -rf ./demo
 	mkdir ./demo
-	jade ./support/demo_template/index.jade --pretty \
+	./node_modules/.bin/jade ./support/demo_template/index.jade --pretty \
 		--out ./demo
-	stylus -u autoprefixer-stylus \
+	./node_modules/.bin/stylus -u autoprefixer-stylus \
 		< ./support/demo_template/index.styl \
 		> ./demo/index.css
 	rm -rf ./support/demo_template/sample.json
-	browserify ./ -s tabex > ./demo/tabex.js
-	browserify ./support/demo_template/index.js > ./demo/index.js
+	./node_modules/.bin/browserify ./ -s tabex > ./demo/tabex.js
+	./node_modules/.bin/browserify ./support/demo_template/index.js > ./demo/index.js
 	cp ./support/demo_template/README.md ./demo/
 
 
 lint:
-	eslint --reset .
+	./node_modules/.bin/eslint --reset .
 
 test: lint browserify
 	./node_modules/.bin/mocha-browser ./test/test.html --server
@@ -64,10 +62,10 @@ browserify:
 	mkdir dist
 	# Browserify
 	( printf "/*! ${NPM_PACKAGE} ${NPM_VERSION} ${GITHUB_PROJ} @license MIT */" ; \
-		browserify ./ -s tabex \
+		./node_modules/.bin/browserify ./ -s tabex \
 		) > dist/tabex.js
 	# Minify
-	uglifyjs dist/tabex.js -b beautify=false,ascii-only=true -c -m \
+	./node_modules/.bin/uglifyjs dist/tabex.js -b beautify=false,ascii_only=true -c -m \
 		--preamble "/*! ${NPM_PACKAGE} ${NPM_VERSION} ${GITHUB_PROJ} @license MIT */" \
 		> dist/tabex.min.js
 
