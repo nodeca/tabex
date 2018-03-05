@@ -18,6 +18,7 @@
     "test": "make test"
   },
   "devDependencies": {
+    "autoprefixer-stylus": "^0.14.0",
     "browserify": "^16.1.0",
     "chai": "^2.3.0",
     "eslint": "0.18.0",
@@ -25,8 +26,7 @@
     "mocha": "^2.2.5",
     "mocha-browser": "^0.2.0",
     "phantomjs": "^1.9.17",
-    "autoprefixer-stylus": "^0.14.0",
-    "jade": "^1.10.0",
+    "pug-cli": "^1.0.0-alpha6",
     "stylus": "^0.54.5",
     "uglify-js": "^3.3.13"
   }

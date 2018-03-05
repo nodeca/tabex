@@ -13,7 +13,7 @@ GITHUB_PROJ := https://github.com//nodeca/${NPM_PACKAGE}
 demo: lint
 	rm -rf ./demo
 	mkdir ./demo
-	./node_modules/.bin/jade ./support/demo_template/index.jade --pretty \
+	./node_modules/.bin/pug ./support/demo_template/index.pug --pretty \
 		--out ./demo
 	./node_modules/.bin/stylus -u autoprefixer-stylus \
 		< ./support/demo_template/index.styl \
