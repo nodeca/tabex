@@ -235,7 +235,7 @@ User can close tab with active server connection. When this happens, new master
 will be elected and new faye instance will be activated.
 
 We also do "transparent" subscribe to faye channels when user subscribes with
-tabex client. Since user can wish to do local broacasts too, strict separation
+tabex client. Since user can wish to do local broadcasts too, strict separation
 required for "local" and "remote". We do it with addind "remote.*" prefix for
 channels which require server subscribtions.
 
